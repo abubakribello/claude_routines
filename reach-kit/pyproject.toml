@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reach-kit"
+version = "0.1.0"
+description = "Reverse-engineered Agent Reach skill architecture — a platform skill kit for AI agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []  # zero required deps; gh CLI is optional
+
+[project.scripts]
+reach-kit = "reach_kit.cli:entry_point"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-mock"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["reach_kit"]

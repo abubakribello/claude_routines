@@ -115,6 +115,36 @@ def cmd_read(url: str, timeout: float = DEFAULT_TIMEOUT, backend: Optional[str] 
     return _emit(run_action(channel, "read", {"target": url}, timeout=timeout, only_backend=backend))
 
 
+def cmd_download(
+    url: str,
+    output: Optional[str] = None,
+    quality: str = "best",
+    timeout: float = 300.0,
+    backend: Optional[str] = None,
+) -> int:
+    """Auto-pick channel from URL and run its download action."""
+    channels = get_all_channels()
+    channel = next((ch for ch in channels if ch.can_handle(url)), None)
+    if channel is None:
+        from reach_kit.channels.web import WebChannel
+        channel = WebChannel()
+
+    action = find_action(channel, "download")
+    if action is None:
+        err = SkillError(
+            BAD_INPUT,
+            f"channel '{channel.name}' does not support download",
+            hint="Only social media channels support download (youtube, tiktok, twitter, instagram, reddit, facebook, linkedin).",
+        )
+        return _emit(envelope(channel=channel.name, action="download", error=err))
+
+    params = {"target": url, "quality": quality}
+    if output:
+        params["output"] = output
+
+    return _emit(run_action(channel, "download", params, timeout=timeout, only_backend=backend))
+
+
 # ── setup (install skill) ────────────────────────────────────────────────────
 
 def _do_setup() -> dict:
@@ -149,12 +179,15 @@ HELP = """reach-kit — platform skill kit for AI agents (all output is JSON)
   reach-kit channels                     list channels, actions, params
   reach-kit <channel> <action> [args]    e.g. reach-kit github search playwright
   reach-kit read <url>                   read a URL with the matching channel
+  reach-kit download <url>               download video/audio from any supported URL
   reach-kit setup                        install the Claude skill file
   reach-kit version                      print version
 
 Flags:
-  --timeout SECONDS    per-call timeout (default 30)
+  --timeout SECONDS    per-call timeout (default 30 for read, 300 for download)
   --backend NAME       force a specific backend
+  --quality QUALITY    download quality: best | 1080p | 720p | 480p | 360p | audio
+  --output DIR         download output directory (agent picks default if omitted)
 """
 
 
@@ -167,8 +200,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     # Global flags
-    timeout = DEFAULT_TIMEOUT
+    timeout: Optional[float] = None
     backend: Optional[str] = None
+    quality: str = "best"
+    output: Optional[str] = None
     clean: List[str] = []
     i = 0
     while i < len(argv):
@@ -180,6 +215,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             i += 2
         elif argv[i] == "--backend" and i + 1 < len(argv):
             backend = argv[i + 1]
+            i += 2
+        elif argv[i] == "--quality" and i + 1 < len(argv):
+            quality = argv[i + 1]
+            i += 2
+        elif argv[i] == "--output" and i + 1 < len(argv):
+            output = argv[i + 1]
             i += 2
         else:
             clean.append(argv[i])
@@ -201,7 +242,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         if len(argv) < 2:
             err = SkillError(BAD_INPUT, "usage: reach-kit read <url>")
             return _emit(envelope(channel=None, action="read", error=err))
-        return cmd_read(argv[1], timeout=timeout, backend=backend)
+        return cmd_read(argv[1], timeout=timeout or DEFAULT_TIMEOUT, backend=backend)
+
+    if cmd == "download":
+        if len(argv) < 2:
+            err = SkillError(BAD_INPUT, "usage: reach-kit download <url> [--quality QUALITY] [--output DIR]")
+            return _emit(envelope(channel=None, action="download", error=err))
+        return cmd_download(argv[1], output=output, quality=quality, timeout=timeout or 300.0, backend=backend)
 
     # reach-kit <channel> <action> [--param value ...]
     channels_map = {ch.name: ch for ch in get_all_channels()}
@@ -240,7 +287,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 pos_idx += 1
             j += 1
 
-    return _emit(run_action(channel, action_name, params, timeout=timeout, only_backend=backend))
+    return _emit(run_action(channel, action_name, params, timeout=timeout or DEFAULT_TIMEOUT, only_backend=backend))
 
 
 def entry_point():

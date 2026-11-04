@@ -127,6 +127,17 @@ class YouTubeChannel(Channel):
             backends=(("yt-dlp", "_ytdlp_subtitles"),),
             live_test={"target": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
         ),
+        Action(
+            "download",
+            "Download a video or audio file to local disk",
+            (
+                Param("target", "YouTube video URL"),
+                Param("output", "output directory (agent picks if omitted)", required=False, default=None),
+                Param("quality", "best | 1080p | 720p | 480p | 360p | audio", required=False, default="best"),
+            ),
+            backends=(("yt-dlp", "_ytdlp_download"),),
+            live_test={"target": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "quality": "360p"},
+        ),
     )
 
     def can_handle(self, url: str) -> bool:
@@ -167,6 +178,10 @@ class YouTubeChannel(Channel):
         if not items:
             raise SkillError(UPSTREAM_BROKEN, "yt-dlp returned no search results")
         return items[:limit]
+
+    def _ytdlp_download(self, *, target: str, output, quality: str, timeout: float) -> list:
+        from reach_kit.runtime.ytdlp import download
+        return [download(target, output=output, quality=quality, timeout=timeout)]
 
     def _ytdlp_subtitles(self, *, target: str, lang: str, timeout: float) -> list:
         _yt_url(target)

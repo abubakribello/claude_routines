@@ -91,6 +91,17 @@ class RedditChannel(Channel):
             backends=(("reddit-json", "_json_subreddit"),),
             live_test={"name": "programming", "limit": 5},
         ),
+        Action(
+            "download",
+            "Download a Reddit video post to local disk",
+            (
+                Param("target", "Reddit post URL containing a video"),
+                Param("output", "output directory (agent picks if omitted)", required=False, default=None),
+                Param("quality", "best | 720p | 480p | audio", required=False, default="best"),
+            ),
+            backends=(("yt-dlp", "_ytdlp_download"),),
+            live_test={"target": "https://www.reddit.com/r/videos/comments/abc123"},
+        ),
     )
 
     def can_handle(self, url: str) -> bool:
@@ -98,6 +109,10 @@ class RedditChannel(Channel):
             return "reddit.com" in urlparse(url).netloc
         except Exception:
             return False
+
+    def _ytdlp_download(self, *, target: str, output, quality: str, timeout: float) -> list:
+        from reach_kit.runtime.ytdlp import download
+        return [download(target, output=output, quality=quality, timeout=timeout)]
 
     def _json_search(self, *, query: str, limit: int, timeout: float,
                      subreddit: str = None) -> list:

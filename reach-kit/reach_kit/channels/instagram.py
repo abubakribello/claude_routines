@@ -74,6 +74,17 @@ class InstagramChannel(Channel):
             public_web=("instagram.com/",),
             live_test={"query": "nasa space"},
         ),
+        Action(
+            "download",
+            "Download an Instagram reel or video to local disk",
+            (
+                Param("target", "Instagram reel or post URL"),
+                Param("output", "output directory (agent picks if omitted)", required=False, default=None),
+                Param("quality", "best | 720p | 480p | audio", required=False, default="best"),
+            ),
+            backends=(("yt-dlp", "_ytdlp_download"),),
+            live_test={"target": "https://www.instagram.com/p/CqP6Z8RLJi9/"},
+        ),
     )
 
     def can_handle(self, url: str) -> bool:
@@ -81,6 +92,10 @@ class InstagramChannel(Channel):
             return "instagram.com" in urlparse(url).netloc or "instagr.am" in urlparse(url).netloc
         except Exception:
             return False
+
+    def _ytdlp_download(self, *, target: str, output, quality: str, timeout: float) -> list:
+        from reach_kit.runtime.ytdlp import download
+        return [download(target, output=output, quality=quality, timeout=timeout)]
 
     def _oembed_read(self, *, target: str, timeout: float) -> list:
         url = _ig_url(target)

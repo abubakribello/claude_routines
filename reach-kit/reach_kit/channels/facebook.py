@@ -78,6 +78,17 @@ class FacebookChannel(Channel):
             public_web=("facebook.com/",),
             live_test={"query": "Meta AI announcement"},
         ),
+        Action(
+            "download",
+            "Download a public Facebook video to local disk",
+            (
+                Param("target", "Facebook video URL"),
+                Param("output", "output directory (agent picks if omitted)", required=False, default=None),
+                Param("quality", "best | 720p | 480p | audio", required=False, default="best"),
+            ),
+            backends=(("yt-dlp", "_ytdlp_download"),),
+            live_test={"target": "https://www.facebook.com/Meta/videos/123"},
+        ),
     )
 
     def can_handle(self, url: str) -> bool:
@@ -85,6 +96,10 @@ class FacebookChannel(Channel):
             return "facebook.com" in urlparse(url).netloc or "fb.com" in urlparse(url).netloc
         except Exception:
             return False
+
+    def _ytdlp_download(self, *, target: str, output, quality: str, timeout: float) -> list:
+        from reach_kit.runtime.ytdlp import download
+        return [download(target, output=output, quality=quality, timeout=timeout)]
 
     def _oembed_read(self, *, target: str, timeout: float) -> list:
         token = os.environ.get("FB_APP_TOKEN")

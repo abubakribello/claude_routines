@@ -94,6 +94,17 @@ class LinkedInChannel(Channel):
             public_web=("linkedin.com/company/", "linkedin.com/jobs/"),
             live_test={"target": "https://www.linkedin.com/company/anthropic"},
         ),
+        Action(
+            "download",
+            "Download a LinkedIn video to local disk",
+            (
+                Param("target", "LinkedIn video post URL"),
+                Param("output", "output directory (agent picks if omitted)", required=False, default=None),
+                Param("quality", "best | 720p | 480p | audio", required=False, default="best"),
+            ),
+            backends=(("yt-dlp", "_ytdlp_download"),),
+            live_test={"target": "https://www.linkedin.com/posts/example_123"},
+        ),
     )
 
     def can_handle(self, url: str) -> bool:
@@ -101,6 +112,10 @@ class LinkedInChannel(Channel):
             return "linkedin.com" in urlparse(url).netloc
         except Exception:
             return False
+
+    def _ytdlp_download(self, *, target: str, output, quality: str, timeout: float) -> list:
+        from reach_kit.runtime.ytdlp import download
+        return [download(target, output=output, quality=quality, timeout=timeout)]
 
     def _api_read(self, *, target: str, timeout: float) -> list:
         token = os.environ.get("LINKEDIN_ACCESS_TOKEN")

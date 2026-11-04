@@ -95,6 +95,17 @@ class TwitterChannel(Channel):
             public_web=("x.com/", "twitter.com/"),
             live_test={"query": "playwright browser automation", "limit": 3},
         ),
+        Action(
+            "download",
+            "Download video from a tweet to local disk",
+            (
+                Param("target", "Tweet URL containing a video"),
+                Param("output", "output directory (agent picks if omitted)", required=False, default=None),
+                Param("quality", "best | 720p | 480p | audio", required=False, default="best"),
+            ),
+            backends=(("yt-dlp", "_ytdlp_download"),),
+            live_test={"target": "https://twitter.com/Twitter/status/1"},
+        ),
     )
 
     def can_handle(self, url: str) -> bool:
@@ -102,6 +113,10 @@ class TwitterChannel(Channel):
             return urlparse(url).netloc.lstrip("www.") in ("twitter.com", "x.com", "t.co")
         except Exception:
             return False
+
+    def _ytdlp_download(self, *, target: str, output, quality: str, timeout: float) -> list:
+        from reach_kit.runtime.ytdlp import download
+        return [download(target, output=output, quality=quality, timeout=timeout)]
 
     def _oembed_read(self, *, target: str, timeout: float) -> list:
         url = _tweet_url(target)

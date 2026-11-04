@@ -1,10 +1,10 @@
 ---
 name: reach-kit
 description: >
-  Read-only access to platform content: search repos, read pages, fetch web content.
-  Use when the user mentions a GitHub link, wants to search the web, or read a URL
-  and your built-in tools are unavailable or insufficient.
-  Does not post, comment, or write anything.
+  Read-only access to platform content: GitHub, YouTube, Reddit, Twitter/X, Instagram,
+  TikTok, LinkedIn, Facebook, and the open web. Use when the user mentions a link to any
+  of these platforms, wants to search them, or read a URL and your built-in tools are
+  unavailable or insufficient. Does not post, comment, or write anything.
 metadata:
   homepage: https://github.com/abubakribello/claude_routines/tree/main/reach-kit
   version: "0.1.0"
@@ -49,8 +49,16 @@ reach-kit read <url>                      # auto-pick channel from URL
 |---|---|---|---|
 | github | default | search, read | nothing (gh CLI optional) |
 | web | default | search, read | nothing |
+| youtube | default | read, search, subtitles | yt-dlp (bundled) |
+| reddit | optional | search, read, subreddit | nothing |
+| twitter | experimental | read, search | TWITTER_BEARER_TOKEN for search |
+| instagram | experimental | read | nothing (oEmbed, public posts only) |
+| tiktok | experimental | read | yt-dlp (bundled) |
+| linkedin | experimental | read, search | LINKEDIN_ACCESS_TOKEN for read |
+| facebook | experimental | read, search | FB_APP_TOKEN for read |
 
-`default` channels work out of the box.
+`default` channels work out of the box. `optional` channels need no auth but may have rate limits.
+`experimental` channels have partial coverage — expect some content to need login.
 
 ## Managing Reach Kit
 
@@ -63,6 +71,15 @@ reach-kit read <url>                      # auto-pick channel from URL
 | Read a repo or issue | `reach-kit github read owner/repo` |
 | Search the web | `reach-kit web search "<query>"` |
 | Read a web page | `reach-kit web read <url>` |
+| Get YouTube video info | `reach-kit youtube read <url>` |
+| Search YouTube | `reach-kit youtube search "<query>"` |
+| Get video subtitles | `reach-kit youtube subtitles <url>` |
+| Search Reddit | `reach-kit reddit search "<query>"` |
+| Read Reddit post | `reach-kit reddit read <url>` |
+| Browse subreddit | `reach-kit reddit subreddit <name>` |
+| Read a tweet | `reach-kit twitter read <url>` |
+| Read Instagram post | `reach-kit instagram read <url>` |
+| Read TikTok video | `reach-kit tiktok read <url>` |
 
 ## Red lines
 

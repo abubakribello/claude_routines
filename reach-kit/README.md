@@ -155,6 +155,64 @@ reach-kit read https://www.youtube.com/watch?v=abc123
 reach-kit read https://reddit.com/r/Python/comments/abc123
 ```
 
+## Downloading videos
+
+Any public video URL can be downloaded with a single command. The channel is picked automatically.
+
+```bash
+# Download — auto-picks channel from URL
+reach-kit download https://www.youtube.com/watch?v=dQw4w9WgXcQ
+reach-kit download https://www.tiktok.com/@user/video/123456789
+reach-kit download https://twitter.com/user/status/123456789
+reach-kit download https://www.instagram.com/reel/ABC123/
+reach-kit download https://www.reddit.com/r/videos/comments/abc123
+reach-kit download https://www.facebook.com/page/videos/123
+reach-kit download https://www.linkedin.com/posts/example_video_123
+
+# Quality options: best (default) | 1080p | 720p | 480p | 360p | audio
+reach-kit download https://youtube.com/watch?v=abc123 --quality 720p
+reach-kit download https://youtube.com/watch?v=abc123 --quality audio   # extracts MP3
+
+# Custom output directory
+reach-kit download https://youtube.com/watch?v=abc123 --output ~/Desktop
+reach-kit download https://youtube.com/watch?v=abc123 --output /tmp/videos
+
+# Or per-channel (same flags)
+reach-kit youtube download https://youtube.com/watch?v=abc123 --quality 1080p
+reach-kit tiktok  download https://tiktok.com/@user/video/123
+```
+
+Output is always a JSON envelope. The local filepath and filesize are in `raw`:
+
+```json
+{
+  "ok": true,
+  "channel": "youtube",
+  "action": "download",
+  "backend": "yt-dlp",
+  "items": [{
+    "title": "Never Gonna Give You Up",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "author": "Rick Astley",
+    "text": "Official music video...",
+    "raw": {
+      "filepath": "/root/reach-kit-downloads/Never Gonna Give You Up.mp4",
+      "filesize_bytes": 24581234,
+      "duration_seconds": 213,
+      "quality": "best",
+      "ext": "mp4",
+      "output_dir": "/root/reach-kit-downloads"
+    }
+  }]
+}
+```
+
+**Default output directory:** `~/reach-kit-downloads/` — created automatically if it doesn't exist.
+
+**What works without auth:** any public video on YouTube, TikTok, Twitter, Reddit. Instagram reels sometimes work. Facebook and LinkedIn public videos vary.
+
+**What doesn't work:** private videos, login-walled content, age-restricted videos without cookies. These return `NOT_FOUND` or `UPSTREAM_BROKEN`.
+
 ---
 
 ## For agents installing reach-kit
